@@ -1,59 +1,114 @@
-import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
+import React from "react";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Tabs } from "expo-router";
+import { TouchableOpacity, StyleSheet, View } from "react-native";
+import GradientButton from "@/components/GradientButton";
 
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+import Colors from "@/constants/Colors";
+import { useColorScheme } from "@/components/useColorScheme";
 
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
+// Custom tab bar icon component
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
+  name: React.ComponentProps<typeof FontAwesome>["name"];
   color: string;
+  size?: number;
 }) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
+  return (
+    <FontAwesome
+      size={props.size || 24}
+      style={{ marginBottom: -3 }}
+      {...props}
+    />
+  );
+}
+
+// Custom add button component
+function AddButton({ onPress }: { onPress: () => void }) {
+  return (
+    <GradientButton
+      onPress={onPress}
+      style={styles.addButtonContainer}
+      gradientStyle={styles.addButton}
+    >
+      <FontAwesome name="plus" size={20} color="#fff" />
+    </GradientButton>
+  );
 }
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
+  const handleAddEntry = () => {
+    console.log("Add new entry from tab bar");
+    // Logic for adding new entry
+  };
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        tabBarActiveTintColor: "#6366f1",
+        tabBarInactiveTintColor: "#9ca3af",
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: "#fff",
+          borderTopWidth: 1,
+          borderTopColor: "#e5e7eb",
+          height: 80,
+          paddingBottom: 20,
+          paddingTop: 10,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "600",
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
+          title: "Dashboard",
+          headerShown: false,
+          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="add"
+        options={{
+          title: "",
+          headerShown: false,
+          tabBarIcon: () => <AddButton onPress={handleAddEntry} />,
+          tabBarButton: () => (
+            <View style={styles.tabButtonWrapper}>
+              <AddButton onPress={handleAddEntry} />
+            </View>
           ),
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="calendar"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: "Calendar",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="calendar" color={color} />
+          ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabButtonWrapper: {
+    top: -15,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButtonContainer: {
+    // Стили для GradientButton будут применены автоматически
+  },
+  addButton: {
+    width: 50,
+    height: 50,
+  },
+});

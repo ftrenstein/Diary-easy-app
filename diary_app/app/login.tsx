@@ -1,21 +1,62 @@
-import React from 'react';
-import { View } from 'react-native';
-
-import Diary from '../assets/images/diarylogo.svg';
-import Diarylock from '../assets/images/diarylock.svg';
-import CustomButton from '../components/CustomButton';
-import { navigate } from 'expo-router/build/global-state/routing';
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import Diary from "../assets/images/diarylogo.svg";
+import Diarylock from "../assets/images/diarylock.svg";
+import CustomButton from "../components/CustomButton";
+import { router } from "expo-router";
 
 const LoginScreen = () => {
+  const handleLogin = () => {
+    router.push("/auth");
+  };
+
   return (
-    <View className='flex-1 w-full overflow-hidden bg-white'>
-      <View className='absolute top-28 left-20 w-44 h-12'>
-        <Diary className='absolute top-0.5 left-12' width={130} height={46} />
+    <View style={styles.container}>
+      <View style={styles.content}>
+        {/* Логотип с названием Diary */}
+        <View style={styles.logoContainer}>
+          <Diary width={130} height={46} />
+        </View>
+
+        {/* Центральная иконка замка */}
+        <View style={styles.lockContainer}>
+          <Diarylock width={282} height={282} />
+        </View>
+
+        {/* Кнопка логин */}
+        <View style={styles.buttonContainer}>
+          <CustomButton title="Login" onPress={handleLogin} />
+        </View>
       </View>
-      <CustomButton title='Login' />
-      <Diarylock className='absolute top-52 left-10' width={282} height={282} />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  content: {
+    flex: 1,
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginTop: 60,
+  },
+  lockContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  buttonContainer: {
+    alignItems: "center",
+    marginBottom: 40,
+  },
+});
 
 export default LoginScreen;
