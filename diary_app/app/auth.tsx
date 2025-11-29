@@ -13,6 +13,7 @@ import { useAuth } from '@/components/AuthContext';
 import { auth } from '../firebase';
 import {
   GoogleAuthProvider,
+  GithubAuthProvider,
   signInWithCredential,
   signInWithPopup,
 } from 'firebase/auth';
@@ -83,10 +84,31 @@ const AuthScreen = () => {
       setIsInProgress(false);
     }
   };
+  const handleGithubAuth = async () => {
+    try {
+      setIsInProgress(true);
 
-  const handleGithubAuth = () => {
-    login();
-    router.push('/(tabs)');
+      if (Platform.OS === 'web') {
+        const provider = new GithubAuthProvider();
+        await signInWithPopup(auth, provider);
+        router.replace('/(tabs)');
+        return;
+      }
+
+      // Native: GitHub auth пока не реализован
+      Alert.alert(
+        'Info',
+        'GitHub authentication для native будет доступен в следующей версии'
+      );
+    } catch (error: any) {
+      console.error('GitHub sign-in error:', error);
+      Alert.alert(
+        'Sign-in error',
+        error.message || 'Failed to sign in with GitHub'
+      );
+    } finally {
+      setIsInProgress(false);
+    }
   };
 
   const handleBackToLogin = () => {
@@ -111,14 +133,11 @@ const AuthScreen = () => {
           <Text style={styles.headerTitle}>Authorization</Text>
         </View>
 
-        {/* Main content */}
         <View style={styles.mainContent}>
-          <Text style={styles.title}>Let's get started!</Text>
-          <Text style={styles.description}>Choose account for sign up</Text>
+          <Text style={styles.title}>Welcome</Text>
+          <Text style={styles.description}>Sign in to continue</Text>
 
-          {/* Authorization buttons */}
           <View style={styles.authButtons}>
-            {/* Google */}
             <TouchableOpacity
               style={[styles.authButton, styles.googleButton]}
               onPress={handleGoogleAuth}
@@ -132,10 +151,10 @@ const AuthScreen = () => {
               </Text>
             </TouchableOpacity>
 
-            {/* GitHub */}
             <TouchableOpacity
               style={[styles.authButton, styles.githubButton]}
               onPress={handleGithubAuth}
+              disabled={isInProgress}
             >
               <View style={styles.githubIcon}>
                 <IconBrandGithub size={20} color="#fff" />
