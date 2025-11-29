@@ -49,6 +49,17 @@ const AuthScreen = () => {
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
         // No need to call login() - onAuthStateChanged will handle it
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        // Извлекаем имя и фамилию
+        const displayName = user.displayName || '';
+        const [firstName, ...lastNameParts] = displayName.split(' ');
+        const lastName = lastNameParts.join(' ');
+
+        console.log('Имя:', firstName);
+        console.log('Фамилия:', lastName);
+        console.log('Email:', user.email);
         router.replace('/(tabs)');
         return;
       }
@@ -115,10 +126,6 @@ const AuthScreen = () => {
     router.back();
   };
 
-  const handleHaveAccount = () => {
-    router.push('/login');
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -162,17 +169,6 @@ const AuthScreen = () => {
               <Text style={styles.authButtonText}>Continue with GitHub</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Login link */}
-          <TouchableOpacity
-            onPress={handleHaveAccount}
-            style={styles.loginLink}
-          >
-            <Text style={styles.loginLinkText}>
-              <Text style={styles.haveAccount}>Have Account? </Text>
-              <Text style={styles.login}>Login</Text>
-            </Text>
-          </TouchableOpacity>
         </View>
       </View>
     </View>

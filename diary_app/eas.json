@@ -4,8 +4,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleDebug"
+        "buildType": "apk"
       },
       "ios": {
         "buildConfiguration": "Debug"
@@ -21,5 +20,8 @@
         "buildType": "app-bundle"
       }
     }
+  },
+  "cli": {
+    "appVersionSource": "remote"
   }
 }
