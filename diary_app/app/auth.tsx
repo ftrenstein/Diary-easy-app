@@ -8,7 +8,6 @@ import {
   Platform,
 } from 'react-native';
 import { router } from 'expo-router';
-import { IconBrandGithub, IconBrandGoogle } from '@tabler/icons-react-native';
 import { useAuth } from '@/components/AuthContext';
 import { auth } from '../firebase';
 import {
@@ -150,11 +149,8 @@ const AuthScreen = () => {
               onPress={handleGoogleAuth}
               disabled={isInProgress}
             >
-              <View style={styles.googleIcon}>
-                <IconBrandGoogle size={20} color="#4285f4" />
-              </View>
               <Text style={[styles.authButtonText, styles.googleText]}>
-                Continue with Google
+                🔵 Continue with Google
               </Text>
             </TouchableOpacity>
 
@@ -163,10 +159,7 @@ const AuthScreen = () => {
               onPress={handleGithubAuth}
               disabled={isInProgress}
             >
-              <View style={styles.githubIcon}>
-                <IconBrandGithub size={20} color="#fff" />
-              </View>
-              <Text style={styles.authButtonText}>Continue with GitHub</Text>
+              <Text style={styles.authButtonText}>⚫ Continue with GitHub</Text>
             </TouchableOpacity>
           </View>
         </View>
