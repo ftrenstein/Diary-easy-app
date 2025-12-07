@@ -20,7 +20,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import * as Clipboard from 'expo-clipboard';
 
-// Динамический импорт для native
+
 let GoogleSignin: any = null;
 if (Platform.OS !== 'web') {
   try {
@@ -28,8 +28,6 @@ if (Platform.OS !== 'web') {
       require('@react-native-google-signin/google-signin').GoogleSignin;
     GoogleSignin.configure({
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      // androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-      // iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
       scopes: ['profile', 'email'],
       offlineAccess: true,
     });
@@ -64,7 +62,6 @@ const AuthScreen = () => {
         return;
       }
 
-      // Native: use @react-native-google-signin
       if (GoogleSignin) {
         await GoogleSignin.hasPlayServices();
         const userInfo = await GoogleSignin.signIn();

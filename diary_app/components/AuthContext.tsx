@@ -89,7 +89,7 @@ interface AuthContextType {
   user: User | null;
   firstName: string;
   lastName: string;
-  useremail?: string;
+  usermail?: string;
   login: () => void;
   logout: () => Promise<void>;
   saveUserProfile: (firstName: string, lastName: string) => Promise<void>;
@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [useremail, setUseremail] = useState('');
+  const [usermail, setusermail] = useState('');
 
   useEffect(() => {
     // Load user profile from storage
@@ -122,10 +122,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const storedFirstName = await storage.getItem('userFirstName');
         const storedLastName = await storage.getItem('userLastName');
-        const storedUseremail = await storage.getItem('userEmail');
+        const storedusermail = await storage.getItem('usermail');
         if (storedFirstName) setFirstName(storedFirstName);
         if (storedLastName) setLastName(storedLastName);
-        if (storedUseremail) setUseremail(storedUseremail);
+        if (storedusermail) setusermail(storedusermail);
       } catch (error) {
         console.error('Failed to load user profile:', error);
       }

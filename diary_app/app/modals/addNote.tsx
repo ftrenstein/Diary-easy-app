@@ -48,7 +48,7 @@ export default function AddNoteModal() {
         text: text.trim(),
         email: user?.email || '',
         icon: selectedMood,
-        useremail: user?.email || '',
+     
         data: null, // serverTimestamp will be used in addNote
       });
 
@@ -125,7 +125,6 @@ export default function AddNoteModal() {
                 onPress={() => setSelectedMood(mood.value)}
               >
                 <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-                <Text style={styles.moodLabel}>{mood.label}</Text>
               </TouchableOpacity>
             ))}
           </View>

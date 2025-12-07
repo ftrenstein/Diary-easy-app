@@ -16,27 +16,24 @@ export interface Note {
   data: any;
   title: string;
   text: string;
-  email: string;
   icon?: string;
-  useremail?: string;
+  email: string;
 }
 
 export const addNote = async ({
   text,
-  email,
   data,
   title,
   icon,
-  useremail,
+  email,
 }: Note) => {
   try {
     const docRef = await addDoc(collection(db, 'notes'), {
       text,
-      email,
       data: serverTimestamp(),
       title,
       icon,
-      useremail,
+      email,
     });
     console.log('Заметка добавлена с ID:', docRef.id);
     return docRef.id;
@@ -46,13 +43,38 @@ export const addNote = async ({
   }
 };
 
-// Получить все заметки пользователя
-export const getUserNotes = async (userEmail: string) => {
+export const getMoodStatistics = async (email: string) => {
   try {
     const q = query(
       collection(db, 'notes'),
-      // where('email', '==', userEmail),
       orderBy('data', 'desc')
+    );
+
+    const querySnapshot = await getDocs(q);
+    const notes = querySnapshot.docs.map(doc => doc.data());
+
+    // Count mood occurrences
+    const moodCounts: { [key: string]: number } = {};
+    notes.forEach(note => {
+      const mood = note.icon || 'neutral';
+      moodCounts[mood] = (moodCounts[mood] || 0) + 1;
+    });
+
+    console.log('Mood statistics:', moodCounts);
+    return moodCounts;
+  } catch (error) {
+    console.error('Ошибка получения статистики:', error);
+    throw error;
+  }
+};
+
+
+export const getUserNotes = async (email: string) => {
+  try {
+    const q = query(
+      collection(db, 'notes'),
+      orderBy('data', 'desc'),
+
     );
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc) => ({
@@ -65,7 +87,7 @@ export const getUserNotes = async (userEmail: string) => {
   }
 };
 
-// Удалить заметку
+
 export const deleteNote = async (noteId: string) => {
   try {
     await deleteDoc(doc(db, 'notes', noteId));
@@ -76,7 +98,7 @@ export const deleteNote = async (noteId: string) => {
   }
 };
 
-// Обновить заметку
+
 export const updateNote = async (noteId: string, updates: Partial<Note>) => {
   try {
     await updateDoc(doc(db, 'notes', noteId), {

@@ -10,8 +10,9 @@ import {
 import { useAuth } from '@/components/AuthContext';
 import CustomButton from '@/components/CustomButton';
 import { navigate } from 'expo-router/build/global-state/routing';
-import { getUserNotes } from '@/services/notesService';
+import { getUserNotes, getMoodStatistics } from '@/services/notesService';
 import { useFocusEffect } from 'expo-router';
+
 
 const MOODS: { [key: string]: string } = {
   happy: '😊',
@@ -24,7 +25,9 @@ const MOODS: { [key: string]: string } = {
 export default function DashboardScreen() {
   const { logout, user } = useAuth();
   const [notes, setNotes] = useState<any[]>([]);
+  const [moodStats, setMoodStats] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(true);
+
 
   const loadNotes = useCallback(async () => {
     if (!user?.email) return;
@@ -33,6 +36,10 @@ export default function DashboardScreen() {
       setLoading(true);
       const userNotes = await getUserNotes(user.email);
       setNotes(userNotes);
+      
+      // Load mood statistics
+      const stats = await getMoodStatistics(user.email);
+      setMoodStats(stats);
     } catch (error) {
       console.error('Error loading notes:', error);
     } finally {
@@ -51,6 +58,13 @@ export default function DashboardScreen() {
     logout();
     navigate('/login');
   };
+
+  const getTopMoods = () => {
+    return Object.entries(moodStats)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+  };
+
 
   return (
     <View style={styles.container}>
@@ -140,48 +154,32 @@ export default function DashboardScreen() {
             ))
           )}
         </View>
-
-        {/* Statistics Section
+        {/* Statistics Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your feel for your 7 entries</Text>
+          <Text style={styles.sectionTitle}>Your mood statistics</Text>
           <View style={styles.statsCard}>
             <View style={styles.chartPlaceholder}>
-              <Text style={styles.chartText}>📊 Mood Chart</Text>
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <View
-                    style={[styles.statDot, { backgroundColor: '#4CAF50' }]}
-                  />
-                  <Text style={styles.statText}>50%</Text>
+              <Text style={styles.chartText}>📊 Top Moods</Text>
+              {Object.keys(moodStats).length === 0 ? (
+                <Text style={styles.emptyStats}>No mood data yet</Text>
+              ) : (
+                <View style={styles.statsRow}>
+                  {getTopMoods().map(([mood, count]) => (
+                    <View key={mood} style={styles.statItem}>
+                      <Text style={styles.moodEmoji}>
+                        {MOODS[mood] || mood}
+                      </Text>
+                      <Text style={styles.statValue}>{count}</Text>
+                      <Text style={styles.statLabel}>
+                        {mood.replace('_', ' ')}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
-                <View style={styles.statItem}>
-                  <View
-                    style={[styles.statDot, { backgroundColor: '#2196F3' }]}
-                  />
-                  <Text style={styles.statText}>20%</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <View
-                    style={[styles.statDot, { backgroundColor: '#FF9800' }]}
-                  />
-                  <Text style={styles.statText}>15%</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <View
-                    style={[styles.statDot, { backgroundColor: '#F44336' }]}
-                  />
-                  <Text style={styles.statText}>10%</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <View
-                    style={[styles.statDot, { backgroundColor: '#9C27B0' }]}
-                  />
-                  <Text style={styles.statText}>5%</Text>
-                </View>
-              </View>
+              )}
             </View>
           </View>
-        </View>*/}
+        </View>
       </ScrollView>
     </View>
   );
@@ -349,6 +347,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  moodEmoji: {
+    fontSize: 28,
+    marginBottom: 4,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000',
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#999',
+    textTransform: 'capitalize',
+  },
   statDot: {
     width: 12,
     height: 12,
@@ -358,6 +370,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#000',
+  },
+  emptyStats: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 12,
   },
   loadingContainer: {
     padding: 40,

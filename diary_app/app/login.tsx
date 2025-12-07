@@ -13,17 +13,16 @@ const LoginScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        {/* Логотип с названием Diary */}
+      
         <View style={styles.logoContainer}>
           <Diary width={130} height={46} />
         </View>
 
-        {/* Центральная иконка замка */}
+       
         <View style={styles.lockContainer}>
           <Diarylock width={282} height={282} />
         </View>
 
-        {/* Кнопка логин */}
         <View style={styles.buttonContainer}>
           <CustomButton title="Login" onPress={handleLogin} />
         </View>
