@@ -1,22 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '@/components/AuthContext';
 import CustomButton from '@/components/CustomButton';
 import { navigate } from 'expo-router/build/global-state/routing';
+import { getUserNotes } from '@/services/notesService';
+import { useFocusEffect } from 'expo-router';
+
+const MOODS: { [key: string]: string } = {
+  happy: '😊',
+  calm: '😌',
+  neutral: '😐',
+  sad: '😔',
+  very_sad: '😢',
+};
 
 export default function DashboardScreen() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const [notes, setNotes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddEntry = () => {
-    // Logic for adding new entry
-    console.log('Add new entry');
-  };
+  const loadNotes = useCallback(async () => {
+    if (!user?.email) return;
+
+    try {
+      setLoading(true);
+      const userNotes = await getUserNotes(user.email);
+      setNotes(userNotes);
+    } catch (error) {
+      console.error('Error loading notes:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.email]);
+
+  // Reload notes when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadNotes();
+    }, [loadNotes])
+  );
 
   const handleLogout = () => {
     logout();
@@ -38,7 +67,9 @@ export default function DashboardScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Welcome Section */}
         <View style={styles.welcomeSection}>
-          <Text style={styles.greeting}>Hello, John Doe</Text>
+          <Text style={styles.greeting}>
+            Hello, {useAuth().firstName} {useAuth().lastName}
+          </Text>
           <Text style={styles.question}>How are you doing today?</Text>
         </View>
 
@@ -46,40 +77,71 @@ export default function DashboardScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recently added</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigate('/modals/allNotes')}>
               <Text style={styles.viewAll}>View All</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Entry Cards */}
-          <View style={styles.entryCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.entryIcon} />
-              <View style={styles.dateChip}>
-                <Text style={styles.dateText}>28 May 21</Text>
-              </View>
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#6366f1" />
             </View>
-            <Text style={styles.entryTitle}>First day in work</Text>
-            <TouchableOpacity style={styles.moreButton}>
-              <Text style={styles.moreText}>⋯</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.entryCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.entryIcon} />
-              <View style={styles.dateChip}>
-                <Text style={styles.dateText}>27 May 21</Text>
-              </View>
+          ) : notes.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No entries yet</Text>
+              <Text style={styles.emptySubtext}>
+                Tap the + button to add your first entry
+              </Text>
             </View>
-            <Text style={styles.entryTitle}>Weekend thoughts</Text>
-            <TouchableOpacity style={styles.moreButton}>
-              <Text style={styles.moreText}>⋯</Text>
-            </TouchableOpacity>
-          </View>
+          ) : (
+            notes.slice(0, 3).map((note) => (
+              <TouchableOpacity
+                key={note.id}
+                style={styles.entryCard}
+                onPress={() => {
+                  navigate({
+                    pathname: '/modals/viewNote',
+                    params: {
+                      id: note.id,
+                      title: note.title,
+                      text: note.text,
+                      icon: note.icon,
+                      data: note.data?.toDate
+                        ? note.data.toDate().toISOString()
+                        : new Date().toISOString(),
+                    },
+                  } as any);
+                }}
+              >
+                <View style={styles.cardHeader}>
+                  <Text style={styles.entryIcon}>
+                    {MOODS[note.icon] || note.icon || '😊'}
+                  </Text>
+                  <View style={styles.dateChip}>
+                    <Text style={styles.dateText}>
+                      {note.data?.toDate
+                        ? new Date(note.data.toDate()).toLocaleDateString(
+                            'en-GB',
+                            {
+                              day: 'numeric',
+                              month: 'short',
+                              year: '2-digit',
+                            }
+                          )
+                        : 'Today'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.entryTitle}>{note.title}</Text>
+                <TouchableOpacity style={styles.moreButton}>
+                  <Text style={styles.moreText}>⋯</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
 
-        {/* Statistics Section */}
+        {/* Statistics Section
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your feel for your 7 entries</Text>
           <View style={styles.statsCard}>
@@ -119,7 +181,7 @@ export default function DashboardScreen() {
               </View>
             </View>
           </View>
-        </View>
+        </View>*/}
       </ScrollView>
     </View>
   );
@@ -226,10 +288,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   entryIcon: {
-    width: 14,
-    height: 14,
-    backgroundColor: '#6366f1',
-    borderRadius: 7,
+    fontSize: 20,
     marginRight: 12,
   },
   dateChip: {
@@ -299,5 +358,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#000',
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#5f5f5f',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999',
   },
 });

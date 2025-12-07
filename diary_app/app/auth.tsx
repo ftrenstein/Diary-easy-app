@@ -16,6 +16,9 @@ import {
   signInWithCredential,
   signInWithPopup,
 } from 'firebase/auth';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+import * as Clipboard from 'expo-clipboard';
 
 // Динамический импорт для native
 let GoogleSignin: any = null;
@@ -25,8 +28,8 @@ if (Platform.OS !== 'web') {
       require('@react-native-google-signin/google-signin').GoogleSignin;
     GoogleSignin.configure({
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      // androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+      // iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
       scopes: ['profile', 'email'],
       offlineAccess: true,
     });
@@ -36,7 +39,7 @@ if (Platform.OS !== 'web') {
 }
 
 const AuthScreen = () => {
-  const { login } = useAuth();
+  const { login, saveUserProfile } = useAuth();
   const [isInProgress, setIsInProgress] = React.useState(false);
 
   const handleGoogleAuth = async () => {
@@ -51,14 +54,12 @@ const AuthScreen = () => {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
-        // Извлекаем имя и фамилию
+        // Extract and save name
         const displayName = user.displayName || '';
         const [firstName, ...lastNameParts] = displayName.split(' ');
         const lastName = lastNameParts.join(' ');
+        await saveUserProfile(firstName || '', lastName || '');
 
-        console.log('Имя:', firstName);
-        console.log('Фамилия:', lastName);
-        console.log('Email:', user.email);
         router.replace('/(tabs)');
         return;
       }
@@ -69,6 +70,17 @@ const AuthScreen = () => {
         const userInfo = await GoogleSignin.signIn();
         const idToken = userInfo.data?.idToken;
 
+        // Extract and save name
+        const displayName =
+          userInfo.user?.name || userInfo.user?.displayName || '';
+        const [firstName, ...lastNameParts] = displayName.split(' ');
+        const lastName = lastNameParts.join(' ');
+        await saveUserProfile(firstName || '', lastName || '');
+
+        console.log('Имя:', firstName);
+        console.log('Фамилия:', lastName);
+        console.log('Email:', userInfo.user?.email);
+
         if (idToken) {
           const credential = GoogleAuthProvider.credential(idToken);
           await signInWithCredential(auth, credential);
@@ -76,10 +88,7 @@ const AuthScreen = () => {
           router.replace('/(tabs)');
         }
       } else {
-        Alert.alert(
-          'Info',
-          'Установите @react-native-google-signin/google-signin для native build'
-        );
+        Alert.alert('Google Sign-In not configured');
       }
     } catch (error: any) {
       console.error('Google sign-in error:', error);
@@ -105,11 +114,130 @@ const AuthScreen = () => {
         return;
       }
 
-      // Native: GitHub auth пока не реализован
-      Alert.alert(
-        'Info',
-        'GitHub authentication для native будет доступен в следующей версии'
-      );
+      // Native: GitHub OAuth Device Flow (no backend required)
+      const clientId = process.env.EXPO_PUBLIC_GITHUB_CLIENT_ID;
+      if (!clientId) {
+        Alert.alert('Config error', 'Missing EXPO_PUBLIC_GITHUB_CLIENT_ID');
+        return;
+      }
+
+      // 1) Start device flow (GitHub expects form-encoded)
+      const codeBody = new URLSearchParams({
+        client_id: clientId,
+        scope: 'read:user user:email',
+      });
+      const codeRes = await fetch('https://github.com/login/device/code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        body: codeBody.toString(),
+      });
+      if (!codeRes.ok) {
+        const errText = await codeRes.text();
+        console.log('GitHub device code error:', codeRes.status, errText);
+        throw new Error('Failed to start GitHub device flow');
+      }
+      const codeJson = await codeRes.json();
+      const {
+        device_code,
+        user_code,
+        verification_uri,
+        verification_uri_complete,
+        interval,
+      } = codeJson;
+
+      // 2) Show code and let user open GitHub when ready
+      const urlToOpen = verification_uri_complete || verification_uri;
+
+      await new Promise<void>((resolve) => {
+        Alert.alert(
+          'GitHub Login',
+          `Your code:\n\n${user_code}\n\nTap OK to open GitHub and enter this code`,
+          [
+            {
+              text: 'OK',
+              onPress: async () => {
+                await WebBrowser.openBrowserAsync(urlToOpen);
+                resolve();
+              },
+            },
+            { text: 'Cancel', style: 'cancel', onPress: () => resolve() },
+          ],
+          { cancelable: false }
+        );
+      });
+
+      // 3) Poll for access token
+      const pollIntervalMs = Math.max(5, interval || 5) * 1000;
+      let accessToken: string | null = null;
+      const maxAttempts = 24; // ~2 minutes
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        await new Promise((r) => setTimeout(r, pollIntervalMs));
+        const tokenBody = new URLSearchParams({
+          client_id: clientId,
+          device_code,
+          grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+        });
+        const tokenRes = await fetch(
+          'https://github.com/login/oauth/access_token',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              Accept: 'application/json',
+            },
+            body: tokenBody.toString(),
+          }
+        );
+        if (!tokenRes.ok) {
+          const errText = await tokenRes.text();
+          console.log('GitHub access token error:', tokenRes.status, errText);
+          continue;
+        }
+        const tokenJson = await tokenRes.json();
+        if (tokenJson.error) {
+          if (tokenJson.error === 'authorization_pending') continue;
+          if (tokenJson.error === 'slow_down') {
+            // wait one more interval
+            continue;
+          }
+          throw new Error(
+            tokenJson.error_description || 'GitHub device flow error'
+          );
+        }
+        accessToken = tokenJson.access_token;
+        break;
+      }
+
+      if (!accessToken) {
+        throw new Error('Timed out waiting for GitHub authorization');
+      }
+
+      // Fetch user info from GitHub to get name
+      try {
+        const userRes = await fetch('https://api.github.com/user', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/json',
+          },
+        });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          const displayName = userData.name || '';
+          const [firstName, ...lastNameParts] = displayName.split(' ');
+          const lastName = lastNameParts.join(' ');
+          await saveUserProfile(firstName || '', lastName || '');
+        }
+      } catch (err) {
+        console.log('Failed to fetch GitHub user info:', err);
+      }
+
+      // 4) Sign in to Firebase with GitHub access token
+      const credential = GithubAuthProvider.credential(accessToken);
+      await signInWithCredential(auth, credential);
+      router.replace('/(tabs)');
     } catch (error: any) {
       console.error('GitHub sign-in error:', error);
       Alert.alert(

@@ -1,12 +1,12 @@
-import React from "react";
+import React from 'react';
 import {
   TouchableOpacity,
   StyleSheet,
   ViewStyle,
   TextStyle,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { GradientColors } from "@/constants/Colors";
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { GradientColors } from '@/constants/Colors';
 
 interface GradientButtonProps {
   children: React.ReactNode;
@@ -20,7 +20,7 @@ interface GradientButtonProps {
 export default function GradientButton({
   children,
   onPress,
-  gradient = "primary",
+  gradient = 'primary',
   style,
   gradientStyle,
   disabled = false,
@@ -48,15 +48,17 @@ export default function GradientButton({
 
 const styles = StyleSheet.create({
   container: {
-    shadowColor: "rgba(53, 68, 207, 0.25)",
+    shadowColor: 'rgba(53, 68, 207, 0.25)',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 1,
     shadowRadius: 30,
     elevation: 30,
+    borderRadius: 25,
+    overflow: 'hidden',
   },
   gradient: {
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 25,
   },
 });

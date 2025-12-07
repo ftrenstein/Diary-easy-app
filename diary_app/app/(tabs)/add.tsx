@@ -1,21 +1,7 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View } from 'react-native';
 
+// This is a placeholder screen for the add button tab
+// The actual functionality is handled by the custom tab button in _layout.tsx
 export default function AddScreen() {
-  // This screen won't be displayed as a tab,
-  // but is needed for the tab structure
-  return (
-    <View style={styles.container}>
-      <Text>Add Entry</Text>
-    </View>
-  );
+  return <View />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f3f3f3",
-  },
-});

@@ -1,15 +1,15 @@
-import React from "react";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { Tabs } from "expo-router";
-import { TouchableOpacity, StyleSheet, View } from "react-native";
-import GradientButton from "@/components/GradientButton";
+import React from 'react';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Tabs, router } from 'expo-router';
+import { TouchableOpacity, StyleSheet, View } from 'react-native';
+import GradientButton from '@/components/GradientButton';
 
-import Colors from "@/constants/Colors";
-import { useColorScheme } from "@/components/useColorScheme";
+import Colors from '@/constants/Colors';
+import { useColorScheme } from '@/components/useColorScheme';
 
 // Custom tab bar icon component
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>["name"];
+  name: React.ComponentProps<typeof FontAwesome>['name'];
   color: string;
   size?: number;
 }) {
@@ -30,7 +30,12 @@ function AddButton({ onPress }: { onPress: () => void }) {
       style={styles.addButtonContainer}
       gradientStyle={styles.addButton}
     >
-      <FontAwesome name="plus" size={20} color="#fff" />
+      <FontAwesome
+        name="plus"
+        size={22}
+        color="#fff"
+        // backgroundColor="#6366f1"
+      />
     </GradientButton>
   );
 }
@@ -39,34 +44,34 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   const handleAddEntry = () => {
-    console.log("Add new entry from tab bar");
-    // Logic for adding new entry
+    console.log('Add new entry from tab bar');
+    router.push('/modals/addNote');
   };
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#6366f1",
-        tabBarInactiveTintColor: "#9ca3af",
+        tabBarActiveTintColor: '#6366f1',
+        tabBarInactiveTintColor: '#9ca3af',
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#fff",
+          backgroundColor: '#fff',
           borderTopWidth: 1,
-          borderTopColor: "#e5e7eb",
+          borderTopColor: '#e5e7eb',
           height: 80,
           paddingBottom: 20,
           paddingTop: 10,
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: "600",
+          fontWeight: '600',
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Dashboard",
+          title: 'Dashboard',
           headerShown: false,
           tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
         }}
@@ -74,7 +79,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="add"
         options={{
-          title: "",
+          title: '',
           headerShown: false,
           tabBarIcon: () => <AddButton onPress={handleAddEntry} />,
           tabBarButton: () => (
@@ -87,7 +92,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="calendar"
         options={{
-          title: "Calendar",
+          title: 'Calendar',
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="calendar" color={color} />
@@ -101,8 +106,8 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabButtonWrapper: {
     top: -15,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   addButtonContainer: {
     // Стили для GradientButton будут применены автоматически
