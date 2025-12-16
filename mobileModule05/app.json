@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "diary_app",
+    "slug": "diary_app",
+    "scheme": "diaryapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.renstein.diaryeasy"
+    },
+    "android": {
+      "googleServicesFile": "./google-services.json",
+      "package": "com.renstein.diaryeasy",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/logo.png"
+    },
+    "plugins": ["expo-router", "expo-web-browser"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2e54ab35-5769-40fc-b5c9-b8d5f737057d"
+      }
+    }
+  }
+}
