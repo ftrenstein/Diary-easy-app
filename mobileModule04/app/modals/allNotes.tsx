@@ -134,10 +134,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: '#fff',
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
   closeButton: {
     width: 40,
@@ -191,10 +188,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     elevation: 3,
-    shadowColor: 'rgba(29, 58, 88, 0.05)',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
+    boxShadow: '0 8px 20px rgba(29, 58, 88, 0.05)',
   },
   cardHeader: {
     flexDirection: 'row',

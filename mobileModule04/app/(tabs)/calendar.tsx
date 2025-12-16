@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,9 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
-} from "react-native";
+} from 'react-native';
 
-const { width } = Dimensions.get("window");
+const { width } = Dimensions.get('window');
 
 export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -38,21 +38,21 @@ export default function CalendarScreen() {
   };
 
   const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const goToPreviousMonth = () => {
     setSelectedDate(
@@ -176,121 +176,112 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f3f3f3",
+    backgroundColor: '#f3f3f3',
   },
   header: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     paddingHorizontal: 24,
     paddingVertical: 20,
     elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#000",
+    fontWeight: 'bold',
+    color: '#000',
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
   },
   calendarHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 20,
   },
   navButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
     elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
   navButtonText: {
     fontSize: 24,
-    color: "#6366f1",
-    fontWeight: "bold",
+    color: '#6366f1',
+    fontWeight: 'bold',
   },
   monthYear: {
     fontSize: 20,
-    fontWeight: "700",
-    color: "#000",
+    fontWeight: '700',
+    color: '#000',
   },
   calendar: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     elevation: 3,
-    shadowColor: "rgba(29, 58, 88, 0.05)",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
+    boxShadow: '0 8px 20px rgba(29, 58, 88, 0.05)',
   },
   dayHeaders: {
-    flexDirection: "row",
+    flexDirection: 'row',
     marginBottom: 8,
   },
   dayHeader: {
     flex: 1,
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: 12,
-    fontWeight: "600",
-    color: "#666",
+    fontWeight: '600',
+    color: '#666',
     paddingVertical: 8,
   },
   daysGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   dayCell: {
     width: (width - 80) / 7,
     height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
   },
   dayText: {
     fontSize: 16,
-    color: "#000",
+    color: '#000',
   },
   todayCell: {
-    backgroundColor: "#6366f1",
+    backgroundColor: '#6366f1',
     borderRadius: 8,
   },
   todayText: {
-    color: "#fff",
-    fontWeight: "bold",
+    color: '#fff',
+    fontWeight: 'bold',
   },
   entryCell: {
-    backgroundColor: "#f0f9ff",
+    backgroundColor: '#f0f9ff',
     borderRadius: 8,
   },
   entryText: {
-    color: "#0369a1",
-    fontWeight: "600",
+    color: '#0369a1',
+    fontWeight: '600',
   },
   entryDot: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 4,
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#0369a1",
+    backgroundColor: '#0369a1',
   },
   summarySection: {
     marginTop: 24,
@@ -298,36 +289,33 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 18,
-    fontWeight: "700",
-    color: "#000",
+    fontWeight: '700',
+    color: '#000',
     marginBottom: 16,
   },
   summaryStats: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 12,
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 8,
     padding: 16,
-    alignItems: "center",
+    alignItems: 'center',
     elevation: 3,
-    shadowColor: "rgba(29, 58, 88, 0.05)",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
+    boxShadow: '0 8px 20px rgba(29, 58, 88, 0.05)',
   },
   statNumber: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#6366f1",
+    fontWeight: 'bold',
+    color: '#6366f1',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: "#666",
-    textAlign: "center",
+    color: '#666',
+    textAlign: 'center',
   },
 });

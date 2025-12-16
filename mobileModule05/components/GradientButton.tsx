@@ -48,10 +48,7 @@ export default function GradientButton({
 
 const styles = StyleSheet.create({
   container: {
-    shadowColor: 'rgba(53, 68, 207, 0.25)',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 1,
-    shadowRadius: 30,
+    boxShadow: '0 12px 30px rgba(53, 68, 207, 0.25)',
     elevation: 30,
     borderRadius: 25,
     overflow: 'hidden',
