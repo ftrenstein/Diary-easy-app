@@ -13,7 +13,6 @@ import { navigate } from 'expo-router/build/global-state/routing';
 import { getUserNotes, getMoodStatistics } from '@/services/notesService';
 import { useFocusEffect } from 'expo-router';
 
-
 const MOODS: { [key: string]: string } = {
   happy: '😊',
   calm: '😌',
@@ -28,7 +27,6 @@ export default function DashboardScreen() {
   const [moodStats, setMoodStats] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(true);
 
-
   const loadNotes = useCallback(async () => {
     if (!user?.email) return;
 
@@ -36,7 +34,7 @@ export default function DashboardScreen() {
       setLoading(true);
       const userNotes = await getUserNotes(user.email);
       setNotes(userNotes);
-      
+
       // Load mood statistics
       const stats = await getMoodStatistics(user.email);
       setMoodStats(stats);
@@ -59,12 +57,19 @@ export default function DashboardScreen() {
     navigate('/login');
   };
 
-  const getTopMoods = () => {
-    return Object.entries(moodStats)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 3);
-  };
+  const getMoodPercentages = () => {
+    const total = Object.values(moodStats).reduce(
+      (sum, count) => sum + count,
+      0
+    );
 
+    // Always show all 5 moods, even if count is 0
+    return Object.keys(MOODS).map((mood) => {
+      const count = moodStats[mood] || 0;
+      const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+      return { mood, count, percentage };
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -159,24 +164,18 @@ export default function DashboardScreen() {
           <Text style={styles.sectionTitle}>Your mood statistics</Text>
           <View style={styles.statsCard}>
             <View style={styles.chartPlaceholder}>
-              <Text style={styles.chartText}>📊 Top Moods</Text>
-              {Object.keys(moodStats).length === 0 ? (
-                <Text style={styles.emptyStats}>No mood data yet</Text>
-              ) : (
-                <View style={styles.statsRow}>
-                  {getTopMoods().map(([mood, count]) => (
-                    <View key={mood} style={styles.statItem}>
-                      <Text style={styles.moodEmoji}>
-                        {MOODS[mood] || mood}
-                      </Text>
-                      <Text style={styles.statValue}>{count}</Text>
-                      <Text style={styles.statLabel}>
-                        {mood.replace('_', ' ')}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
+              <Text style={styles.chartText}>📊 Mood Distribution</Text>
+              <View style={styles.statsGrid}>
+                {getMoodPercentages().map(({ mood, percentage }) => (
+                  <View key={mood} style={styles.statItem}>
+                    <Text style={styles.moodEmoji}>{MOODS[mood]}</Text>
+                    <Text style={styles.statValue}>{percentage}%</Text>
+                    <Text style={styles.statLabel}>
+                      {mood.replace('_', ' ')}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </View>
           </View>
         </View>
@@ -343,14 +342,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     width: '100%',
   },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    width: '100%',
+    gap: 16,
+    marginTop: 16,
+  },
   statItem: {
     alignItems: 'center',
     gap: 8,
+    minWidth: 60,
   },
   moodEmoji: {
     fontSize: 28,
-    marginBottom: 4,
   },
+  moodsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    width: '100%',
+    gap: 16,
+  },
+
   statValue: {
     fontSize: 18,
     fontWeight: '700',

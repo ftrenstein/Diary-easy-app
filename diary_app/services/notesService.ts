@@ -20,13 +20,7 @@ export interface Note {
   email: string;
 }
 
-export const addNote = async ({
-  text,
-  data,
-  title,
-  icon,
-  email,
-}: Note) => {
+export const addNote = async ({ text, data, title, icon, email }: Note) => {
   try {
     const docRef = await addDoc(collection(db, 'notes'), {
       text,
@@ -46,16 +40,16 @@ export const addNote = async ({
 export const getMoodStatistics = async (email: string) => {
   try {
     const q = query(
-      collection(db, 'notes'),
-      orderBy('data', 'desc')
+      collection(db, 'notes')
+      // where("email", "==", email),
     );
 
     const querySnapshot = await getDocs(q);
-    const notes = querySnapshot.docs.map(doc => doc.data());
+    const notes = querySnapshot.docs.map((doc) => doc.data());
 
     // Count mood occurrences
     const moodCounts: { [key: string]: number } = {};
-    notes.forEach(note => {
+    notes.forEach((note) => {
       const mood = note.icon || 'neutral';
       moodCounts[mood] = (moodCounts[mood] || 0) + 1;
     });
@@ -68,14 +62,9 @@ export const getMoodStatistics = async (email: string) => {
   }
 };
 
-
 export const getUserNotes = async (email: string) => {
   try {
-    const q = query(
-      collection(db, 'notes'),
-      orderBy('data', 'desc'),
-
-    );
+    const q = query(collection(db, 'notes'), orderBy('data', 'desc'));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
@@ -87,7 +76,6 @@ export const getUserNotes = async (email: string) => {
   }
 };
 
-
 export const deleteNote = async (noteId: string) => {
   try {
     await deleteDoc(doc(db, 'notes', noteId));
@@ -97,7 +85,6 @@ export const deleteNote = async (noteId: string) => {
     throw error;
   }
 };
-
 
 export const updateNote = async (noteId: string, updates: Partial<Note>) => {
   try {
