@@ -18,8 +18,7 @@ import {
 } from 'firebase/auth';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import * as Clipboard from 'expo-clipboard';
-
+import * as AuthSession from 'expo-auth-session';
 
 let GoogleSignin: any = null;
 if (Platform.OS !== 'web') {
@@ -29,7 +28,8 @@ if (Platform.OS !== 'web') {
     GoogleSignin.configure({
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
       scopes: ['profile', 'email'],
-      offlineAccess: true,
+      offlineAccess: false, // Не сохранять токены
+      forceCodeForRefreshToken: false,
     });
   } catch (e) {
     console.log('Google Sign-In not available');
@@ -46,9 +46,17 @@ const AuthScreen = () => {
 
       // Web: use Firebase popup
       if (Platform.OS === 'web') {
+        // Clear Firebase session storage on web before login
+        try {
+          sessionStorage.clear();
+          localStorage.removeItem(
+            'firebase:authUser:AIzaSyB5bIKiZ9_P3AxvuXG0Lq_KTSL2QTUZ6hs:[DEFAULT]'
+          );
+        } catch (e) {
+          console.log('Web storage clear error:', e);
+        }
+
         const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        // No need to call login() - onAuthStateChanged will handle it
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
@@ -62,40 +70,50 @@ const AuthScreen = () => {
         return;
       }
 
+      // Mobile: use Google Sign-In SDK
       if (GoogleSignin) {
-        await GoogleSignin.hasPlayServices();
+        // Выход перед входом для очистки сохраненного аккаунта
+        await GoogleSignin.signOut();
+
+        await GoogleSignin.hasPlayServices({
+          showPlayServicesUpdateDialog: true,
+        });
         const userInfo = await GoogleSignin.signIn();
-        const idToken = userInfo.data?.idToken;
 
         // Extract and save name
         const displayName =
-          userInfo.user?.name || userInfo.user?.displayName || '';
-        const [firstName, ...lastNameParts] = displayName.split(' ');
-        const lastName = lastNameParts.join(' ');
-        await saveUserProfile(firstName || '', lastName || '');
+          userInfo.user?.name || userInfo.user?.givenName || '';
+        const firstName = userInfo.user?.givenName || '';
+        const lastName = userInfo.user?.familyName || '';
+        await saveUserProfile(firstName, lastName);
 
         console.log('Имя:', firstName);
         console.log('Фамилия:', lastName);
         console.log('Email:', userInfo.user?.email);
 
+        // Get ID token and sign in to Firebase
+        const idToken = userInfo.data?.idToken;
         if (idToken) {
           const credential = GoogleAuthProvider.credential(idToken);
           await signInWithCredential(auth, credential);
-          // No need to call login() - onAuthStateChanged will handle it
           router.replace('/(tabs)');
+        } else {
+          throw new Error('No ID token received');
         }
       } else {
-        Alert.alert('Google Sign-In not configured');
+        Alert.alert('Error', 'Google Sign-In not available on this platform');
       }
     } catch (error: any) {
       console.error('Google sign-in error:', error);
-      if (error.code !== '12501') {
-        // User cancelled
-        Alert.alert(
-          'Sign-in error',
-          error.message || 'Failed to sign in with Google'
-        );
+      if (error.code === '12501' || error.code === 'ERROR_CANCELED') {
+        // User cancelled - don't show error
+        return;
       }
+      Alert.alert(
+        'Sign-in error',
+        error.message ||
+          'Failed to sign in with Google. Please check your internet connection.'
+      );
     } finally {
       setIsInProgress(false);
     }
@@ -105,114 +123,84 @@ const AuthScreen = () => {
       setIsInProgress(true);
 
       if (Platform.OS === 'web') {
+        // Clear Firebase session storage on web before login
+        try {
+          sessionStorage.clear();
+          localStorage.removeItem(
+            'firebase:authUser:AIzaSyB5bIKiZ9_P3AxvuXG0Lq_KTSL2QTUZ6hs:[DEFAULT]'
+          );
+        } catch (e) {
+          console.log('Web storage clear error:', e);
+        }
+
         const provider = new GithubAuthProvider();
         await signInWithPopup(auth, provider);
         router.replace('/(tabs)');
         return;
       }
 
-      // Native: GitHub OAuth Device Flow (no backend required)
+      // Native: GitHub OAuth through browser
       const clientId = process.env.EXPO_PUBLIC_GITHUB_CLIENT_ID;
       if (!clientId) {
         Alert.alert('Config error', 'Missing EXPO_PUBLIC_GITHUB_CLIENT_ID');
         return;
       }
 
-      // 1) Start device flow (GitHub expects form-encoded)
-      const codeBody = new URLSearchParams({
-        client_id: clientId,
-        scope: 'read:user user:email',
+      const redirectUrl = AuthSession.makeRedirectUri({
+        scheme: 'diaryapp',
       });
-      const codeRes = await fetch('https://github.com/login/device/code', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Accept: 'application/json',
-        },
-        body: codeBody.toString(),
-      });
-      if (!codeRes.ok) {
-        const errText = await codeRes.text();
-        console.log('GitHub device code error:', codeRes.status, errText);
-        throw new Error('Failed to start GitHub device flow');
+
+      const authUrl =
+        `https://github.com/login/oauth/authorize?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUrl)}&` +
+        `scope=read:user%20user:email&` +
+        `response_type=code&` +
+        `prompt=login`; // Force login each time
+
+      // Open browser
+      const result = await WebBrowser.openAuthSessionAsync(
+        authUrl,
+        redirectUrl
+      );
+
+      if (result.type !== 'success') {
+        throw new Error('Authorization cancelled');
       }
-      const codeJson = await codeRes.json();
-      const {
-        device_code,
-        user_code,
-        verification_uri,
-        verification_uri_complete,
-        interval,
-      } = codeJson;
 
-      // 2) Show code and let user open GitHub when ready
-      const urlToOpen = verification_uri_complete || verification_uri;
+      // Parse code from URL
+      const url = new URL(result.url);
+      const code = url.searchParams.get('code');
+      if (!code) {
+        throw new Error('No authorization code received');
+      }
 
-      await new Promise<void>((resolve) => {
-        Alert.alert(
-          'GitHub Login',
-          `Your code:\n\n${user_code}\n\nTap OK to open GitHub and enter this code`,
-          [
-            {
-              text: 'OK',
-              onPress: async () => {
-                await WebBrowser.openBrowserAsync(urlToOpen);
-                resolve();
-              },
-            },
-            { text: 'Cancel', style: 'cancel', onPress: () => resolve() },
-          ],
-          { cancelable: false }
-        );
-      });
-
-      // 3) Poll for access token
-      const pollIntervalMs = Math.max(5, interval || 5) * 1000;
-      let accessToken: string | null = null;
-      const maxAttempts = 24; // ~2 minutes
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        await new Promise((r) => setTimeout(r, pollIntervalMs));
-        const tokenBody = new URLSearchParams({
-          client_id: clientId,
-          device_code,
-          grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-        });
-        const tokenRes = await fetch(
-          'https://github.com/login/oauth/access_token',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              Accept: 'application/json',
-            },
-            body: tokenBody.toString(),
-          }
-        );
-        if (!tokenRes.ok) {
-          const errText = await tokenRes.text();
-          console.log('GitHub access token error:', tokenRes.status, errText);
-          continue;
+      // Exchange code for access token
+      const tokenResponse = await fetch(
+        'https://github.com/login/oauth/access_token',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            client_id: clientId,
+            client_secret: process.env.EXPO_PUBLIC_GITHUB_CLIENT_SECRET,
+            code,
+            redirect_uri: redirectUrl,
+          }),
         }
-        const tokenJson = await tokenRes.json();
-        if (tokenJson.error) {
-          if (tokenJson.error === 'authorization_pending') continue;
-          if (tokenJson.error === 'slow_down') {
-            // wait one more interval
-            continue;
-          }
-          throw new Error(
-            tokenJson.error_description || 'GitHub device flow error'
-          );
-        }
-        accessToken = tokenJson.access_token;
-        break;
+      );
+
+      const tokenData = await tokenResponse.json();
+      if (!tokenData.access_token) {
+        throw new Error('Failed to get access token');
       }
 
-      if (!accessToken) {
-        throw new Error('Timed out waiting for GitHub authorization');
-      }
+      const accessToken = tokenData.access_token;
 
-      // Fetch user info from GitHub to get name
+      // Fetch user info from GitHub
       try {
         const userRes = await fetch('https://api.github.com/user', {
           headers: {
@@ -231,12 +219,15 @@ const AuthScreen = () => {
         console.log('Failed to fetch GitHub user info:', err);
       }
 
-      // 4) Sign in to Firebase with GitHub access token
+      // Sign in to Firebase with GitHub access token
       const credential = GithubAuthProvider.credential(accessToken);
       await signInWithCredential(auth, credential);
       router.replace('/(tabs)');
     } catch (error: any) {
       console.error('GitHub sign-in error:', error);
+      if (error.message === 'Authorization cancelled') {
+        return; // User cancelled - don't show error
+      }
       Alert.alert(
         'Sign-in error',
         error.message || 'Failed to sign in with GitHub'

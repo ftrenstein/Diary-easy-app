@@ -95,7 +95,19 @@ export default function TabLayout() {
           title: 'Calendar',
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <TabBarIcon name="calendar" color={color} />
+            <TabBarIcon name="calendar" color="#ccc" />
+          ),
+          tabBarButton: () => (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                opacity: 0.3,
+              }}
+            >
+              <TabBarIcon name="calendar" color="#ccc" />
+            </View>
           ),
         }}
       />

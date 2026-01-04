@@ -22,7 +22,7 @@ const MOODS: { [key: string]: string } = {
 };
 
 export default function DashboardScreen() {
-  const { logout, user } = useAuth();
+  const { logout, user, firstName, lastName } = useAuth();
   const [notes, setNotes] = useState<any[]>([]);
   const [moodStats, setMoodStats] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(true);
@@ -87,7 +87,7 @@ export default function DashboardScreen() {
         {/* Welcome Section */}
         <View style={styles.welcomeSection}>
           <Text style={styles.greeting}>
-            Hello, {useAuth().firstName} {useAuth().lastName}
+            Hello, {firstName} {lastName}
           </Text>
           <Text style={styles.question}>How are you doing today?</Text>
         </View>
@@ -152,19 +152,20 @@ export default function DashboardScreen() {
                   </View>
                 </View>
                 <Text style={styles.entryTitle}>{note.title}</Text>
-                <TouchableOpacity style={styles.moreButton}>
+                {/* <TouchableOpacity style={styles.moreButton}>
                   <Text style={styles.moreText}>⋯</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </TouchableOpacity>
             ))
           )}
         </View>
         {/* Statistics Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your mood statistics</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Your mood statistics</Text>
+          </View>
           <View style={styles.statsCard}>
             <View style={styles.chartPlaceholder}>
-              <Text style={styles.chartText}>📊 Mood Distribution</Text>
               <View style={styles.statsGrid}>
                 {getMoodPercentages().map(({ mood, percentage }) => (
                   <View key={mood} style={styles.statItem}>

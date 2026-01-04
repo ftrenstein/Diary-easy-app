@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "717169590664",
+    "project_id": "diary-easy-7d97a",
+    "storage_bucket": "diary-easy-7d97a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:717169590664:android:3b29347dec1cec8bc1ba3d",
+        "android_client_info": {
+          "package_name": "com.renstein.diaryeasy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "717169590664-pr77bb1uc07d31nefk8k6s10aju69nrt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.renstein.diaryeasy",
+            "certificate_hash": "7c26c310f2195aa7922d5cc7dcdadb3088604371"
+          }
+        },
+        {
+          "client_id": "717169590664-5k1p9jfjaie24tfqf014verhs5q8tas0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoDfPVALaVnVgnnAb_8mt-2KGqj2jX-AA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "717169590664-5k1p9jfjaie24tfqf014verhs5q8tas0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

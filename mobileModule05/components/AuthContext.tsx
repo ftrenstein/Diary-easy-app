@@ -178,12 +178,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
 
+      // Clear GitHub auth tokens
+      await storage.removeItem('github_access_token');
+
       // Sign out from Firebase
       await signOut(auth);
 
-      // Clear storage
+      // Clear all auth-related storage
       await storage.removeItem('userFirstName');
       await storage.removeItem('userLastName');
+      await storage.removeItem('usermail');
+
+      // Clear Firebase session storage on web
+      if (Platform.OS === 'web') {
+        try {
+          sessionStorage.clear();
+          localStorage.removeItem(
+            'firebase:authUser:AIzaSyB5bIKiZ9_P3AxvuXG0Lq_KTSL2QTUZ6hs:[DEFAULT]'
+          );
+          localStorage.removeItem(
+            'firebase:authUser:AIzaSyB5bIKiZ9_P3AxvuXG0Lq_KTSL2QTUZ6hs:[DEFAULT]:OAuthResponse'
+          );
+        } catch (e) {
+          console.log('Web storage clear error:', e);
+        }
+      }
 
       // Clear state
       setIsAuthenticated(false);
