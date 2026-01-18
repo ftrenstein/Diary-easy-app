@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,12 +7,48 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+import { useAuth } from '@/components/AuthContext';
+import { getUserNotes } from '@/services/notesService';
+import { navigate } from 'expo-router/build/global-state/routing';
+import { useFocusEffect } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
 export default function CalendarScreen() {
+  const MOODS: { [key: string]: string } = {
+    happy: '😊',
+    calm: '😌',
+    neutral: '😐',
+    sad: '😔',
+    very_sad: '😢',
+  };
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const { logout, user, firstName, lastName } = useAuth();
+  const [notes, setNotes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
+  const loadNotes = useCallback(async () => {
+    if (!user?.email) return;
+
+    try {
+      setLoading(true);
+      const userNotes = await getUserNotes(user.email);
+      setNotes(userNotes);
+
+      // Load mood statistics
+    } catch (error) {
+      console.error('Error loading notes:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.email]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadNotes();
+    }, [loadNotes])
+  );
   // Generate calendar days for current month
   const generateCalendarDays = () => {
     const year = selectedDate.getFullYear();
@@ -75,10 +111,35 @@ export default function CalendarScreen() {
       selectedDate.getFullYear() === today.getFullYear()
     );
   };
+  const getNotesForDay = (day: number | null) => {
+    if (!day) return [];
+
+    return notes.filter((note) => {
+      if (!note.data?.toDate) return false;
+      const noteDate = note.data.toDate();
+      return (
+        noteDate.getDate() === day &&
+        noteDate.getMonth() === selectedDate.getMonth() &&
+        noteDate.getFullYear() === selectedDate.getFullYear()
+      );
+    });
+  };
 
   const hasEntry = (day: number | null) => {
-    // Mock data - replace with real entry checking logic
-    return day && [5, 12, 18, 25].includes(day);
+    // console.log('notes in hasEntry', notes);
+    for (let i = 0; i < notes.length; i++) {
+      const note = notes[i];
+      if (!note.data?.toDate) continue;
+      const noteDate = note.data.toDate();
+      if (
+        noteDate.getDate() === day &&
+        noteDate.getMonth() === selectedDate.getMonth() &&
+        noteDate.getFullYear() === selectedDate.getFullYear()
+      ) {
+        return true;
+      }
+    }
+    return false;
   };
 
   return (
@@ -128,8 +189,10 @@ export default function CalendarScreen() {
                   styles.dayCell,
                   isToday(day) && styles.todayCell,
                   hasEntry(day) ? styles.entryCell : null,
+                  selectedDay === day && styles.selectedDayCell,
                 ]}
                 disabled={!day}
+                onPress={() => setSelectedDay(selectedDay === day ? null : day)}
               >
                 {day && (
                   <>
@@ -150,23 +213,48 @@ export default function CalendarScreen() {
           </View>
         </View>
 
-        {/* Entry Summary */}
-        <View style={styles.summarySection}>
-          <Text style={styles.summaryTitle}>This Month</Text>
-          <View style={styles.summaryStats}>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>12</Text>
-              <Text style={styles.statLabel}>Total Entries</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>8</Text>
-              <Text style={styles.statLabel}>This Week</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>3</Text>
-              <Text style={styles.statLabel}>Streak Days</Text>
-            </View>
-          </View>
+        <View style={styles.section}>
+          {getNotesForDay(selectedDay).map((note) => (
+            <TouchableOpacity
+              key={note.id}
+              style={styles.entryCard}
+              onPress={() => {
+                navigate({
+                  pathname: '/modals/viewNote',
+                  params: {
+                    id: note.id,
+                    title: note.title,
+                    text: note.text,
+                    icon: note.icon,
+                    data: note.data?.toDate
+                      ? note.data.toDate().toISOString()
+                      : new Date().toISOString(),
+                  },
+                } as any);
+              }}
+            >
+              <View style={styles.cardHeader}>
+                <Text style={styles.entryIcon}>
+                  {MOODS[note.icon] || note.icon || '😊'}
+                </Text>
+                <View style={styles.dateChip}>
+                  <Text style={styles.dateText}>
+                    {note.data?.toDate
+                      ? new Date(note.data.toDate()).toLocaleDateString(
+                          'en-GB',
+                          {
+                            day: 'numeric',
+                            month: 'short',
+                            year: '2-digit',
+                          }
+                        )
+                      : 'Today'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.entryTitle}>{note.title}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
     </View>
@@ -174,6 +262,50 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
+  entryCard: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 3,
+    boxShadow: '0 8px 20px rgba(29, 58, 88, 0.05)',
+    position: 'relative',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  entryIcon: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  dateChip: {
+    backgroundColor: '#00ffff',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  dateText: {
+    fontSize: 13,
+    color: '#000',
+    lineHeight: 20,
+  },
+  entryTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000',
+    lineHeight: 22,
+    letterSpacing: 0.4,
+  },
+  section: {
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  selectedDayCell: {
+    borderWidth: 2,
+    borderColor: '#6366f1',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f3f3f3',
@@ -228,7 +360,7 @@ const styles = StyleSheet.create({
   calendar: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
     elevation: 3,
     boxShadow: '0 8px 20px rgba(29, 58, 88, 0.05)',
   },
@@ -249,14 +381,14 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   dayCell: {
-    width: (width - 80) / 7,
-    height: 40,
+    width: '14.28%',
+    aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
   dayText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#000',
   },
   todayCell: {
@@ -282,40 +414,5 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: '#0369a1',
-  },
-  summarySection: {
-    marginTop: 24,
-    marginBottom: 100,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#000',
-    marginBottom: 16,
-  },
-  summaryStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    elevation: 3,
-    boxShadow: '0 8px 20px rgba(29, 58, 88, 0.05)',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#6366f1',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
   },
 });

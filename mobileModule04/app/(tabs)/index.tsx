@@ -95,7 +95,9 @@ export default function DashboardScreen() {
         {/* Recently Added Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recently added</Text>
+            <Text style={styles.sectionTitle}>
+              Recently added, {notes.length} entries
+            </Text>
             <TouchableOpacity onPress={() => navigate('/modals/allNotes')}>
               <Text style={styles.viewAll}>View All</Text>
             </TouchableOpacity>

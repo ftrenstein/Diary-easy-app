@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '@/components/AuthContext';
-import CustomButton from '@/components/CustomButton';
 import { navigate } from 'expo-router/build/global-state/routing';
 import { getUserNotes, getMoodStatistics } from '@/services/notesService';
 import { useFocusEffect } from 'expo-router';
@@ -35,7 +34,6 @@ export default function DashboardScreen() {
       const userNotes = await getUserNotes(user.email);
       setNotes(userNotes);
 
-      // Load mood statistics
       const stats = await getMoodStatistics(user.email);
       setMoodStats(stats);
     } catch (error) {
@@ -45,7 +43,6 @@ export default function DashboardScreen() {
     }
   }, [user?.email]);
 
-  // Reload notes when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       loadNotes();
@@ -63,7 +60,6 @@ export default function DashboardScreen() {
       0
     );
 
-    // Always show all 5 moods, even if count is 0
     return Object.keys(MOODS).map((mood) => {
       const count = moodStats[mood] || 0;
       const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -73,7 +69,6 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Text style={styles.appName}>Diary</Text>
@@ -84,7 +79,6 @@ export default function DashboardScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Welcome Section */}
         <View style={styles.welcomeSection}>
           <Text style={styles.greeting}>
             Hello, {firstName} {lastName}
@@ -92,7 +86,6 @@ export default function DashboardScreen() {
           <Text style={styles.question}>How are you doing today?</Text>
         </View>
 
-        {/* Recently Added Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recently added</Text>
@@ -152,14 +145,29 @@ export default function DashboardScreen() {
                   </View>
                 </View>
                 <Text style={styles.entryTitle}>{note.title}</Text>
-                {/* <TouchableOpacity style={styles.moreButton}>
-                  <Text style={styles.moreText}>⋯</Text>
-                </TouchableOpacity> */}
               </TouchableOpacity>
             ))
           )}
         </View>
+
         {/* Statistics Section */}
+        <View style={styles.summarySection}>
+          <View style={styles.summaryStats}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{notes.length}</Text>
+              <Text style={styles.statLabel}>Total Entries</Text>
+            </View>
+            {/* <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{notes.length}</Text>
+              <Text style={styles.statLabel}>This Week</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statLabel}>Streak Days</Text>
+            </View> */}
+          </View>
+        </View>
+
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Your mood statistics</Text>
@@ -243,6 +251,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 24,
+    marginBottom: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -298,19 +307,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     letterSpacing: 0.4,
   },
-  moreButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  moreText: {
-    fontSize: 16,
-    color: '#666',
-  },
   statsCard: {
     backgroundColor: '#fff',
     borderRadius: 8,
@@ -321,15 +317,6 @@ const styles = StyleSheet.create({
   chartPlaceholder: {
     alignItems: 'center',
     paddingVertical: 20,
-  },
-  chartText: {
-    fontSize: 24,
-    marginBottom: 20,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -347,14 +334,6 @@ const styles = StyleSheet.create({
   moodEmoji: {
     fontSize: 28,
   },
-  moodsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    width: '100%',
-    gap: 16,
-  },
-
   statValue: {
     fontSize: 18,
     fontWeight: '700',
@@ -364,21 +343,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#999',
     textTransform: 'capitalize',
-  },
-  statDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  statText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#000',
-  },
-  emptyStats: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 12,
   },
   loadingContainer: {
     padding: 40,
@@ -397,5 +361,29 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     color: '#999',
+  },
+  summarySection: {
+    marginTop: 24,
+    marginBottom: 24,
+  },
+  summaryStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    elevation: 3,
+    boxShadow: '0 8px 20px rgba(29, 58, 88, 0.05)',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#6366f1',
+    marginBottom: 4,
   },
 });

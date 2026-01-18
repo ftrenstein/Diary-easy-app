@@ -29,10 +29,10 @@ export const addNote = async ({ text, data, title, icon, email }: Note) => {
       icon,
       email,
     });
-    console.log('Заметка добавлена с ID:', docRef.id);
+    console.log('note added with ID:', docRef.id);
     return docRef.id;
   } catch (error) {
-    console.error('Ошибка добавления заметки:', error);
+    console.error('error of adding note:', error);
     throw error;
   }
 };
@@ -57,7 +57,7 @@ export const getMoodStatistics = async (email: string) => {
     console.log('Mood statistics:', moodCounts);
     return moodCounts;
   } catch (error) {
-    console.error('Ошибка получения статистики:', error);
+    console.error('error of getting statistics:', error);
     throw error;
   }
 };
@@ -71,7 +71,7 @@ export const getUserNotes = async (email: string) => {
       ...doc.data(),
     }));
   } catch (error) {
-    console.error('Ошибка получения заметок:', error);
+    console.error('error of receiving notes:', error);
     throw error;
   }
 };
@@ -79,9 +79,9 @@ export const getUserNotes = async (email: string) => {
 export const deleteNote = async (noteId: string) => {
   try {
     await deleteDoc(doc(db, 'notes', noteId));
-    console.log('Заметка удалена:', noteId);
+    console.log('note deleted:', noteId);
   } catch (error) {
-    console.error('Ошибка удаления заметки:', error);
+    console.error('error of deleting note:', error);
     throw error;
   }
 };
@@ -92,9 +92,9 @@ export const updateNote = async (noteId: string, updates: Partial<Note>) => {
       ...updates,
       data: serverTimestamp(),
     });
-    console.log('Заметка обновлена:', noteId);
+    console.log('note updated:', noteId);
   } catch (error) {
-    console.error('Ошибка обновления заметки:', error);
+    console.error('error of updating note:', error);
     throw error;
   }
 };

@@ -137,7 +137,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       setIsAuthenticated(!!firebaseUser);
-      console.log('Authentication state:', !!firebaseUser);
+      console.log('Authentication state logout :', !!firebaseUser);
 
       // If user logs in and we have their display name, save it
       if (firebaseUser && firebaseUser.displayName) {
